@@ -46,7 +46,15 @@ class CHContextApi extends ContextApi with Logging {
         "Please set spark.gluten.sql.columnar.libpath to enable clickhouse backend")
     }
     // Path based load. Ignore all other loadees.
-    JniLibLoader.loadFromPath(libPath, true)
+    try {
+      JniLibLoader.loadFromPath(libPath, true)
+    } catch {
+      case e: RuntimeException =>
+        logInfo("here is executor container , load libch.so from  container path")
+        JniLibLoader.loadFromPath(
+          conf.get(GlutenConfig.GLUTEN_EXECUTOR_LIB_PATH, StringUtils.EMPTY),
+          true)
+    }
 
     // Add configs
     conf.set(
