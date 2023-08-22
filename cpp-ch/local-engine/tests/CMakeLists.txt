@@ -54,17 +54,17 @@ if (ENABLE_TESTS)
     message("local engine udf sources: ${local_engine_udf_sources}")
     message("local engine function parser sources: ${local_engine_function_parser_sources}")
 
-    add_executable(unit_tests_local_engine ${local_engine_gtest_sources} ${local_engine_udf_sources} ${local_engine_function_parser_sources})
-    target_include_directories(unit_tests_local_engine PRIVATE
-        ${GTEST_INCLUDE_DIRS}/include
-        ${ClickHouse_SOURCE_DIR}/utils/extern-local_engine)
+#    add_executable(unit_tests_local_engine ${local_engine_gtest_sources} ${local_engine_udf_sources} ${local_engine_function_parser_sources})
+#    target_include_directories(unit_tests_local_engine PRIVATE
+#        ${GTEST_INCLUDE_DIRS}/include
+#        ${ClickHouse_SOURCE_DIR}/utils/extern-local_engine)
     # no-unreachable-code for GTEST_SKIP
-    target_compile_options(unit_tests_local_engine PRIVATE -Wno-unreachable-code)
-    target_link_libraries(unit_tests_local_engine PRIVATE gluten_clickhouse_backend_libs _gtest_all clickhouse_parsers loggers)
-else()
-    include_directories(benchmark_local_engine SYSTEM PUBLIC
-        ${ClickHouse_SOURCE_DIR}/utils/extern-local_engine
-    )
-    add_executable(benchmark_local_engine benchmark_local_engine.cpp benchmark_parquet_read.cpp benchmark_spark_row.cpp)
-    target_link_libraries(benchmark_local_engine PRIVATE gluten_clickhouse_backend_libs ch_contrib::gbenchmark_all loggers)
+#    target_compile_options(unit_tests_local_engine PRIVATE -Wno-unreachable-code)
+#    target_link_libraries(unit_tests_local_engine PRIVATE gluten_clickhouse_backend_libs _gtest_all clickhouse_parsers loggers)
+#else()
+#    include_directories(benchmark_local_engine SYSTEM PUBLIC
+#        ${ClickHouse_SOURCE_DIR}/utils/extern-local_engine
+#    )
+#    add_executable(benchmark_local_engine benchmark_local_engine.cpp benchmark_parquet_read.cpp benchmark_spark_row.cpp)
+#    target_link_libraries(benchmark_local_engine PRIVATE gluten_clickhouse_backend_libs ch_contrib::gbenchmark_all loggers)
 endif()

@@ -566,6 +566,16 @@ object ExpressionConverter extends SQLConfHelper with Logging {
           substraitExprName.get,
           replaceWithExpressionTransformer(md5.child, attributeSeq),
           md5)
+
+      case t: Substring =>
+        StringSubstrTransformer(
+          substraitExprName.get,
+          replaceWithExpressionTransformer(t.first, attributeSeq),
+          replaceWithExpressionTransformer(t.second, attributeSeq),
+          replaceWithExpressionTransformer(t.third, attributeSeq),
+          t
+        )
+
       case t: StringTranslate =>
         StringTranslateTransformer(
           substraitExprName.get,

@@ -22,10 +22,31 @@ import io.glutenproject.substrait.`type`.TypeBuilder
 import io.glutenproject.substrait.expression.{ExpressionBuilder, ExpressionNode, IfThenNode, IntLiteralNode, StringLiteralNode}
 
 import org.apache.spark.internal.Logging
-import org.apache.spark.sql.catalyst.expressions.{Expression, StringLocate, StringSplit, StringTranslate}
+import org.apache.spark.sql.catalyst.expressions.{Expression, StringLocate, StringSplit, StringTranslate, Substring}
 import org.apache.spark.sql.types.IntegerType
 
 import com.google.common.collect.Lists
+
+case class StringSubstrTransformer(
+    substraitExprName: String,
+    str: ExpressionTransformer,
+    pos: ExpressionTransformer,
+    len: ExpressionTransformer,
+    original: Substring)
+  extends ExpressionTransformer
+  with Logging {
+  override def doTransform(args: Object): ExpressionNode = {
+
+    val p = pos.doTransform(args).asInstanceOf[IntLiteralNode].getValue
+    if (p == 0) {
+      throw new UnsupportedOperationException(
+        "backend must Indices in strings are 1-based"
+      )
+    }
+    TernaryExpressionTransformer(substraitExprName, str, pos, len, original)
+      .doTransform(args)
+  }
+}
 
 case class StringTranslateTransformer(
     substraitExprName: String,
