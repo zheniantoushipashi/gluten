@@ -478,6 +478,14 @@ object ExpressionConverter extends SQLConfHelper with Logging {
           replaceWithExpressionTransformer(getStructField.child, attributeSeq),
           getStructField.ordinal,
           getStructField)
+      case t: Substring =>
+        StringSubstrTransformer(
+          substraitExprName,
+          replaceWithExpressionTransformer(t.first, attributeSeq),
+          replaceWithExpressionTransformer(t.second, attributeSeq),
+          replaceWithExpressionTransformer(t.third, attributeSeq),
+          t
+        )
       case t: StringTranslate =>
         StringTranslateTransformer(
           substraitExprName,

@@ -48,6 +48,26 @@ case class String2TrimExpressionTransformer(
   }
 }
 
+case class StringSubstrTransformer(
+    substraitExprName: String,
+    str: ExpressionTransformer,
+    pos: ExpressionTransformer,
+    len: ExpressionTransformer,
+    original: Substring)
+  extends ExpressionTransformer {
+  override def doTransform(args: Object): ExpressionNode = {
+
+    val p = pos.doTransform(args).asInstanceOf[IntLiteralNode].getValue
+    if (p == 0) {
+      throw new UnsupportedOperationException(
+        "backend must Indices in strings are 1-based"
+      )
+    }
+    GenericExpressionTransformer(substraitExprName, Seq(str, pos, len), original)
+      .doTransform(args)
+  }
+}
+
 case class StringTranslateTransformer(
     substraitExprName: String,
     srcExpr: ExpressionTransformer,
