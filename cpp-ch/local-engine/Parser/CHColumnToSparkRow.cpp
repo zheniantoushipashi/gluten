@@ -461,7 +461,6 @@ std::unique_ptr<SparkRowInfo> CHColumnToSparkRow::convertCHColumnToSparkRow(cons
     {
         const auto & col = block.getByPosition(col_idx);
         int64_t field_offset = spark_row_info->getFieldOffset(col_idx);
-
         ColumnWithTypeAndName col_not_const{col.column->convertToFullColumnIfConst(), col.type, col.name};
         writeValue(
             spark_row_info->getBufferAddress(),

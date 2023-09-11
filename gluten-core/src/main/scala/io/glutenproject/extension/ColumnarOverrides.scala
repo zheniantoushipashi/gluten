@@ -728,7 +728,7 @@ case class ColumnarOverrideRules(session: SparkSession)
   @transient private lazy val planChangeLogger = new PlanChangeLogger[SparkPlan]()
 
   // Tracks whether the columnar rule is called through AQE.
-  private var isAdaptiveContext: Boolean = false
+  private var isAdaptiveContext: ThreadLocal[Boolean] = new ThreadLocal[Boolean]
   // This is an empirical value, may need to be changed for supporting other versions of spark.
   private val aqeStackTraceIndex = 13
 
@@ -738,11 +738,11 @@ case class ColumnarOverrideRules(session: SparkSession)
 
   // Just for test use.
   def enableAdaptiveContext(): Unit = {
-    isAdaptiveContext = true
+    isAdaptiveContext.set(true)
   }
 
   private def preOverrides(): List[SparkSession => Rule[SparkPlan]] = {
-    val tagBeforeTransformHitsRules = if (this.isAdaptiveContext) {
+    val tagBeforeTransformHitsRules = if (this.isAdaptiveContext.get()) {
       // When AQE is supported, rules are applied in ColumnarQueryStagePrepOverrides
       List.empty
     } else {
@@ -753,7 +753,7 @@ case class ColumnarOverrideRules(session: SparkSession)
         (spark: SparkSession) => PlanOneRowRelation(spark),
         (_: SparkSession) => FallbackEmptySchemaRelation(),
         (_: SparkSession) => AddTransformHintRule(),
-        (_: SparkSession) => TransformPreOverrides(this.isAdaptiveContext),
+        (_: SparkSession) => TransformPreOverrides(this.isAdaptiveContext.get()),
         (_: SparkSession) => EnsureLocalSortRequirements
       ) :::
       BackendsApiManager.getSparkPlanExecApiInstance.genExtendedColumnarPreRules() :::
@@ -761,12 +761,12 @@ case class ColumnarOverrideRules(session: SparkSession)
   }
 
   private def fallbackPolicy(): List[SparkSession => Rule[SparkPlan]] = {
-    List((_: SparkSession) => ExpandFallbackPolicy(isAdaptiveContext, originalPlan))
+    List((_: SparkSession) => ExpandFallbackPolicy(isAdaptiveContext.get(), originalPlan))
   }
 
   private def postOverrides(): List[SparkSession => Rule[SparkPlan]] =
     List(
-      (_: SparkSession) => TransformPostOverrides(this.isAdaptiveContext),
+      (_: SparkSession) => TransformPostOverrides(this.isAdaptiveContext.get()),
       (s: SparkSession) => VanillaColumnarPlanOverrides(s)) :::
       BackendsApiManager.getSparkPlanExecApiInstance.genExtendedColumnarPostRules() :::
       List((_: SparkSession) => ColumnarCollapseTransformStages(GlutenConfig.getConf)) :::
@@ -790,8 +790,10 @@ case class ColumnarOverrideRules(session: SparkSession)
       // columnar rule will be applied in adaptive execution context. This part of code
       // needs to be carefully checked when supporting higher versions of spark to make
       // sure the calling stack has not been changed.
-      isAdaptiveContext = traceElements(aqeStackTraceIndex).getClassName.equals(
-        AdaptiveSparkPlanExec.getClass.getName)
+      isAdaptiveContext.set(
+        traceElements(aqeStackTraceIndex).getClassName.equals(
+          AdaptiveSparkPlanExec.getClass.getName)
+      )
       // Holds the original plan for possible entire fallback.
       originalPlan = plan
       transformPlan(preOverrides(), plan, "pre")
